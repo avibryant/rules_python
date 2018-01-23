@@ -48,6 +48,12 @@ class Wheel(object):
     # Escape any illegal characters with underscore.
     return re.sub('[-.]', '_', canonical)
 
+  def data(self):
+    # Return the name of the data directory within the .whl file.
+    # e.g. google_cloud-0.27.0-py2.py3-none-any.whl ->
+    #      google_cloud-0.27.0.data
+    return '{}-{}.data'.format(self.distribution(), self.version())
+
   def _dist_info(self):
     # Return the name of the dist-info directory within the .whl file.
     # e.g. google_cloud-0.27.0-py2.py3-none-any.whl ->
@@ -146,7 +152,7 @@ py_library(
     data = glob(["**/*"], exclude=["**/*.py", "**/* *", "BUILD", "WORKSPACE"]),
     # This makes this directory a top-level in the python import
     # search path for anything that depends on this.
-    imports = ["."],
+    imports = [".","{data}/purelib"],
     deps = [{dependencies}],
 )
 {extras}""".format(
@@ -155,6 +161,7 @@ py_library(
     'requirement("%s")' % d
     for d in whl.dependencies()
   ]),
+  data = whl.data(),
   extras='\n\n'.join([
     """py_library(
     name = "{extra}",
